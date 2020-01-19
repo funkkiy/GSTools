@@ -2,7 +2,7 @@
 <h4 align="center">Gyakuten Saiban data manipulation tools</h4>
 <div align="center">
 	<a href="https://github.com/davicr/GSTools/blob/master/LICENSE">
-		<img src="https://img.shields.io/github/license/davicr/GSTools.svg"/>
+		<img src="https://img.shields.io/github/license/davicr/GSTools.svg?"/>
 	</a>
 </div>
 
