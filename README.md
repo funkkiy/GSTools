@@ -21,5 +21,9 @@ If you contribute to these tools in any way, please share your changes with me!
 .\GsMdtTools.exe -e new_script.json
 ```
 
+## GSMdtTools Warning
+GSMdtTools has only been tested with USA ``(_u.mdt)`` dialog scripts and might need extra character conversion information to work with scripts from other regions.
+
 ## Thanks
 * Users that posted information about the file formats in ZenHAX
+* Raymonf
