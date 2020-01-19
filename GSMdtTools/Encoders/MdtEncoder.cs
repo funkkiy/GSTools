@@ -412,6 +412,10 @@ namespace GSMdtTools.Encoders
                 {
                     "ê",
                     "ε"
+                },
+                {
+                    "&",
+                    "＆"
                 }
             };
 
@@ -495,7 +499,6 @@ namespace GSMdtTools.Encoders
                  */
                 foreach (IGSToken token in tokens)
                 {
-                    Console.WriteLine($"{token}");
                     switch (token)
                     {
                         case GSStringToken stringToken:

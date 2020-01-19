@@ -10,6 +10,7 @@ namespace GSMdtTools.Decoders
         private readonly Stream mdtStream;
 
         private ushort messageCount = 0;
+        private ushort invalidOffsets = 0;
 
         GSOperation[] gsOps = {
             new GSOperation("CodeProc_00", 0),
@@ -161,6 +162,26 @@ namespace GSMdtTools.Decoders
                 using (var reader = new BinaryReader(mdtStream, Encoding.UTF8, true))
                 {
                     messageCount = reader.ReadUInt16();
+
+                    long previousPos = mdtStream.Position;
+
+                    // Skip dummy
+                    _ = reader.ReadUInt16();
+
+                    // Check if offsets are valid :-)
+                    for (int i = 0; i < messageCount; i++)
+                    {
+                        uint offset = reader.ReadUInt32();
+                        if (offset > mdtStream.Length)
+                        {
+                            Console.WriteLine($"Pruned invalid offset #{invalidOffsets}: {offset} > {mdtStream.Length}");
+                            messageCount--;
+                            invalidOffsets++;
+                        }
+                    }
+
+                    // Go back to original position
+                    mdtStream.Seek(previousPos, SeekOrigin.Begin);
                 }
             }
 
@@ -174,36 +195,39 @@ namespace GSMdtTools.Decoders
             using (var reader = new BinaryReader(mdtStream))
             {
                 ushort count = GetMessageCount();
+                Console.WriteLine(count);
 
                 // Skip dummy sized 2 bytes
                 _ = reader.ReadUInt16();
 
                 // Obtain offset and length for messages
-                uint[] messageOffsets = new uint[messageCount];
-                for (ushort i = 0; i < messageCount; i++)
+                uint[] messageOffsets = new uint[count];
+                for (ushort i = 0; i < count; i++)
                 {
                     messageOffsets[i] = reader.ReadUInt32();
                 }
 
-                uint[] messageLengths = new uint[messageCount];
-                for (ushort i = 0; i < messageCount - 1; i++)
+                // Skip invalid offsets
+                for (ushort i = 0; i < invalidOffsets; i++)
+                {
+                    _ = reader.ReadUInt32();
+                }
+
+                uint[] messageLengths = new uint[count];
+                for (ushort i = 0; i < count - 1; i++)
                 {
                     messageLengths[i] = (messageOffsets[i + 1] - messageOffsets[i]) / sizeof(ushort);
                 }
-                messageLengths[messageCount - 1] = (uint)(mdtStream.Length - messageOffsets[messageCount - 1]) / sizeof(ushort);
+                messageLengths[count - 1] = (uint)(mdtStream.Length - messageOffsets[count - 1]) / sizeof(ushort);
 
-                tokens.Add(new GSMessageCountToken(messageCount));
+                tokens.Add(new GSMessageCountToken(count));
 
                 /*
                  * A character in the MDT script file is represented by 2 bytes, UTF-16LE encoding
                  * An operation and its arguments are represented by 2 bytes
                  */
-                for (ushort i = 0; i < messageCount; i++)
+                for (ushort i = 0; i < count; i++)
                 {
-                    // Add message ending token
-                    // TODO: the EndMessage decoding is flimsy, not 1:1
-                    tokens.Add(new GSEndMessageToken());
-
                     StringBuilder sb = new StringBuilder();
                     int opTimes = 0;
                     for (uint j = 0; j < messageLengths[i] - opTimes; j++)
@@ -246,6 +270,10 @@ namespace GSMdtTools.Decoders
                         tokens.Add(new GSStringToken(sb.ToString()));
                         sb.Clear();
                     }
+
+                    // Add message ending token
+                    // TODO: the EndMessage decoding is flimsy, not 1:1
+                    tokens.Add(new GSEndMessageToken());
                 }
             }
 

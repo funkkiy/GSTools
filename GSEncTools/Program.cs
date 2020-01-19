@@ -73,10 +73,12 @@ namespace GSDecryptor
 
         static void Main(string[] args)
         {
+            bool shouldDecrypt = false;
             bool shouldEncrypt = false;
             bool shouldShowHelp = false;
             var options = new OptionSet
             {
+                { "d|decrypt", "decrypt a file", d => shouldDecrypt = d != null },
                 { "e|encrypt", "encrypt a file", e => shouldEncrypt = e != null },
                 { "h|help", "show the help message", h => shouldShowHelp = h != null}
             };
@@ -123,6 +125,12 @@ namespace GSDecryptor
                 Console.WriteLine("Does the given file exist?");
             }
 
+            if (!(shouldDecrypt ^ shouldEncrypt))
+            {
+                // shouldDecrypt and shouldEncrypt are False
+                string dataExtension = Path.GetExtension(dataFilename);
+                shouldEncrypt = (dataExtension == ".new");
+            }
             if (!shouldEncrypt)
             {
                 File.WriteAllBytes(dataFilename + ".dec", DecryptBytes(dataBytes));

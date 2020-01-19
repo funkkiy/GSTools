@@ -13,10 +13,12 @@ namespace GSMdtTools
     {
         static void Main(string[] args)
         {
+            bool shouldDecode = false;
             bool shouldEncode = false;
             bool shouldShowHelp = false;
             var options = new OptionSet
             {
+                { "d|decode", "decode a file", d => shouldDecode = d != null },
                 { "e|encode", "encode a file", e => shouldEncode = e != null },
                 { "h|help", "show the help message", h => shouldShowHelp = h != null}
             };
@@ -48,11 +50,8 @@ namespace GSMdtTools
             }
             else
             {
-                dataFilename = ".\\a.dec";
-#if !DEBUG
                 Console.WriteLine($"GsMdtTools: Input the path to a {(shouldEncode ? "JSON" : "MDT")} file");
                 return;
-#endif
             }
 
             // Read MDT or JSON file
@@ -65,6 +64,13 @@ namespace GSMdtTools
                 Console.WriteLine($"GsMdtTools: {e.Message}");
                 Console.WriteLine("Does the given file exist?");
                 return;
+            }
+
+            if (!(shouldDecode ^ shouldEncode))
+            {
+                // shouldDecode and shouldEncode are False
+                string dataExtension = Path.GetExtension(dataFilename);
+                shouldEncode = !(dataExtension == ".mdt" || dataExtension == ".dec");
             }
 
             // Decode to GSTokens, re-encode to target format
@@ -85,7 +91,7 @@ namespace GSMdtTools
 
                 // Encode GSTokens in MDT
                 Encoders.MdtEncoder mdtEncoder = new Encoders.MdtEncoder(new FileStream(
-                    $"{Path.GetFileNameWithoutExtension(dataFilename)}.new.mdt", FileMode.Create), tokens);
+                    $"{Path.GetFileNameWithoutExtension(dataFilename)}.mdt.new", FileMode.Create), tokens);
                 mdtEncoder.EncodeTokens();
             }
         }
