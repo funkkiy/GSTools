@@ -272,7 +272,6 @@ namespace GSMdtTools.Decoders
                     }
 
                     // Add message ending token
-                    // TODO: the EndMessage decoding is flimsy, not 1:1
                     tokens.Add(new GSEndMessageToken());
                 }
             }
